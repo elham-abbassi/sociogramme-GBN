@@ -1,3 +1,16 @@
-from django.shortcuts import render
+from rest_framework import generics
+from .models import Questionnaire
+from .serializers import QuestionnaireSerializer
 
-# Create your views here.
+
+class QuestionnaireListView(generics.ListAPIView):
+    queryset = Questionnaire.objects.all()
+    serializer_class = QuestionnaireSerializer
+
+
+class QuestionnaireDetailView(generics.RetrieveAPIView):
+    queryset = Questionnaire.objects.all()
+    serializer_class = QuestionnaireSerializer
+
+
+    
