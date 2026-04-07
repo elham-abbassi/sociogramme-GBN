@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Questionnaire, Question, ChoiceOption
+from .models import Questionnaire, Question, ChoiceOption, OptionGroup
 
 
 class ChoiceOptionSerializer(serializers.ModelSerializer):
@@ -9,11 +9,16 @@ class ChoiceOptionSerializer(serializers.ModelSerializer):
 
 
 class QuestionSerializer(serializers.ModelSerializer):
-    options = ChoiceOptionSerializer(many=True, read_only=True)
+    options = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
-        fields = ['id', 'text', 'type', 'required', 'options']
+        fields = ['id', 'text', 'type', 'required', 'display_mode', 'options']
+
+    def get_options(self, obj):
+        if obj.option_group:
+            return ChoiceOptionSerializer(obj.option_group.options.all(), many=True).data
+        return []
 
 
 class QuestionnaireSerializer(serializers.ModelSerializer):

@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     # Your apps
     'questionnaires',
     'responses',
+    'analytics',
 ]
 
 MIDDLEWARE = [

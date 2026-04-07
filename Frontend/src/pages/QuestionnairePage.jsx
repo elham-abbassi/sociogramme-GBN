@@ -33,30 +33,63 @@ function QuestionnairePage() {
     }));
   };
 
-  const handleSubmit = async () => {
-    if (!questionnaire) return;
+  const handleCheckboxChange = (questionId, optionLabel, checked) => {
+    setAnswers((prevAnswers) => {
+      const currentAnswers = prevAnswers[questionId] || [];
 
-    const formattedAnswers = Object.keys(answers).map((questionId) => ({
-      question: parseInt(questionId),
-      value: answers[questionId],
-    }));
-
-    const payload = {
-      questionnaire: questionnaire.id,
-      answers: formattedAnswers,
-    };
-
-    console.log("Sending:", payload);
-
-    try {
-      const response = await api.post("/responses/", payload);
-      console.log("Response saved:", response.data);
-      alert("Réponses envoyées avec succès !");
-    } catch (error) {
-      console.error("Erreur lors de l'envoi des réponses:", error);
-      alert("Erreur lors de l'envoi des réponses.");
-    }
+      if (checked) {
+        return {
+          ...prevAnswers,
+          [questionId]: [...currentAnswers, optionLabel],
+        };
+      } else {
+        return {
+          ...prevAnswers,
+          [questionId]: currentAnswers.filter(
+            (item) => item !== optionLabel
+          ),
+        };
+      }
+    });
   };
+
+  const handleMultiSelectChange = (questionId, selectedOptions) => {
+  const values = Array.from(selectedOptions, (option) => option.value);
+
+    setAnswers((prevAnswers) => ({
+      ...prevAnswers,
+      [questionId]: values,
+    }));
+  };
+
+
+  const handleSubmit = async () => {
+  if (!questionnaire) return;
+
+  const formattedAnswers = Object.keys(answers).map((questionId) => {
+    const answerValue = answers[questionId];
+
+    return {
+      question: parseInt(questionId),
+      value: Array.isArray(answerValue)
+        ? JSON.stringify(answerValue)
+        : answerValue,
+    };
+  });
+
+  const payload = {
+    questionnaire: questionnaire.id,
+    answers: formattedAnswers,
+  };
+
+  try {
+    await api.post("/responses/", payload);
+    alert("Réponses envoyées avec succès !");
+  } catch (error) {
+    console.error("Erreur lors de l'envoi :", error);
+    alert("Erreur lors de l'envoi des réponses.");
+  }
+};
 
   if (loading) return <p>Chargement...</p>;
   if (!questionnaire) return <p>Questionnaire introuvable.</p>;
@@ -65,42 +98,114 @@ function QuestionnairePage() {
     <div style={{ padding: "20px" }}>
       <h1>{questionnaire.title}</h1>
       <p>{questionnaire.description}</p>
+    <form>
+    {questionnaire.questions.map((q) => (
+    <div key={q.id} style={{ marginBottom: "20px" }}>
+      <p>
+        <strong>{q.text}</strong>
+      </p>
+    {q.type === "multiple_choice" && q.display_mode === "checkbox" && (
+      <div style={{ display: "flex", gap: "30px", alignItems: "flex-start" }}>
+        <div>
+          {q.options.map((opt) => (
+            <div key={opt.id}>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={(answers[q.id] || []).includes(opt.label)}
+                  onChange={(e) =>
+                    handleCheckboxChange(q.id, opt.label, e.target.checked)
+                  }
+                />
+                {opt.label}
+              </label>
+            </div>
+          ))}
+        </div>
+        <div>
+        <strong>Sélectionnés :</strong>
+        {(answers[q.id] || []).length === 0 ? (
+          <p>Aucune sélection</p>
+        ) : (
+          <ul>
+            {(answers[q.id] || []).map((item, index) => (
+              <li key={index}>{item}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  )}
 
-      <form>
-        {questionnaire.questions.map((q) => (
-          <div key={q.id} style={{ marginBottom: "20px" }}>
-            <p>
-              <strong>{q.text}</strong>
-            </p>
+  {q.type === "multiple_choice" && q.display_mode === "multi_select" && (
+  <div style={{ display: "flex", gap: "30px", alignItems: "flex-start" }}>
+    <select
+      multiple
+      onChange={(e) =>
+        handleMultiSelectChange(q.id, e.target.selectedOptions)
+      }
+      style={{ width: "300px", minHeight: "120px" }}
+    >
+      {q.options.map((opt) => (
+        <option key={opt.id} value={opt.label}>
+          {opt.label}
+        </option>
+      ))}
+    </select>
 
-            {q.options && q.options.length > 0 ? (
-              q.options.map((opt) => (
-                <div key={opt.id}>
-                  <label>
-                    <input
-                      type="radio"
-                      name={`question-${q.id}`}
-                      value={opt.label}
-                      onChange={(e) => handleChange(q.id, e.target.value)}
-                    />
-                    {opt.label}
-                  </label>
-                </div>
-              ))
-            ) : (
-              <input
-                type="text"
-                onChange={(e) => handleChange(q.id, e.target.value)}
-                placeholder="Votre réponse"
-              />
-            )}
-          </div>
-        ))}
+    <div>
+      <strong>Réponses choisies :</strong>
+      {(answers[q.id] || []).length === 0 ? (
+        <p>Aucune réponse sélectionnée</p>
+      ) : (
+        <ul>
+          {(answers[q.id] || []).map((item, index) => (
+            <li key={index}>{item}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  </div>
+)}
 
-        <button type="button" onClick={handleSubmit}>
-          Envoyer
-        </button>
-      </form>
+  {q.type === "single_choice" && (
+    q.options.map((opt) => (
+      <div key={opt.id}>
+        <label>
+          <input
+            type="radio"
+            name={`question-${q.id}`}
+            value={opt.label}
+            onChange={(e) => handleChange(q.id, e.target.value)}
+            />
+          {opt.label}
+          </label>
+        </div>
+      ))
+    )}
+
+    {q.type === "text" && (
+      <input
+        type="text"
+        onChange={(e) => handleChange(q.id, e.target.value)}
+        placeholder="Votre réponse"
+      />
+    )}
+
+    {q.type === "number" && (
+      <input
+        type="number"
+        onChange={(e) => handleChange(q.id, e.target.value)}
+        placeholder="Votre réponse"
+      />
+    )}
+  </div>
+))}
+
+  <button type="button" onClick={handleSubmit}>
+    Envoyer
+  </button>
+    </form>
     </div>
   );
 }
