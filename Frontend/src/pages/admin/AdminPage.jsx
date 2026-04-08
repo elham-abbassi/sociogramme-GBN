@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import api from "../services/api";
+import api from "../../services/api";
 
-function HomePage() {
+function AdminPage() {
   const [questionnaires, setQuestionnaires] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -13,8 +13,8 @@ function HomePage() {
         const response = await api.get("/questionnaires/");
         setQuestionnaires(response.data);
       } catch (err) {
-        setError("Erreur lors du chargement des questionnaires.");
         console.error(err);
+        setError("Erreur lors du chargement des questionnaires.");
       } finally {
         setLoading(false);
       }
@@ -28,8 +28,8 @@ function HomePage() {
 
   return (
     <div style={{ padding: "20px" }}>
-      <h1>Liste des questionnaires</h1>
-      <p>Choisissez un questionnaire pour répondre.</p>
+      <h1>Admin Dashboard</h1>
+      <p>Gérez les questionnaires et consultez les analyses.</p>
 
       {questionnaires.length === 0 ? (
         <p>Aucun questionnaire trouvé.</p>
@@ -48,8 +48,15 @@ function HomePage() {
               <h3>{questionnaire.title}</h3>
               <p>{questionnaire.description}</p>
 
+              <Link
+                to={`/analysis/${questionnaire.id}`}
+                style={{ marginRight: "12px" }}
+              >
+                Voir analyse
+              </Link>
+
               <Link to={`/questionnaire/${questionnaire.id}`}>
-                Répondre au questionnaire
+                Voir questionnaire
               </Link>
             </div>
           ))}
@@ -59,4 +66,4 @@ function HomePage() {
   );
 }
 
-export default HomePage;
+export default AdminPage;
