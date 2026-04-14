@@ -8,10 +8,12 @@ class Response(models.Model):
         on_delete=models.CASCADE,
         related_name='responses'
     )
+    respondent_name = models.CharField(max_length=255, blank=True, default="")
+    department = models.CharField(max_length=255, blank=True, default="")
     submitted_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"Response {self.id} - {self.questionnaire.title}"
+def __str__(self):
+    return f"{self.respondent_name} - {self.questionnaire.title}"   
 
 
 class Answer(models.Model):
@@ -23,12 +25,9 @@ class Answer(models.Model):
     question = models.ForeignKey(
         Question,
         on_delete=models.CASCADE,
-        related_name='answers'
     )
     value = models.TextField()
 
     def __str__(self):
-        return f"Answer to {self.question.text}"
-    
-
+        return f"{self.question.text} -> {self.value}"
 

@@ -13,7 +13,7 @@ class ResponseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Response
-        fields = ['id', 'questionnaire', 'answers']
+        fields = ["id", "questionnaire", "respondent_name", "department", "answers"]
 
     def create(self, validated_data):
         answers_data = validated_data.pop('answers')

@@ -27,3 +27,46 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
     class Meta:
         model = Questionnaire
         fields = ['id', 'title', 'description', 'created_at', 'questions']
+
+
+class QuestionCreateSerializer(serializers.Serializer):
+    text = serializers.CharField()
+    type = serializers.CharField()
+    required = serializers.BooleanField(default=True)
+    options = serializers.ListField(
+        child=serializers.CharField(), required=False
+    )
+
+
+class QuestionnaireCreateSerializer(serializers.Serializer):
+    title = serializers.CharField()
+    description = serializers.CharField(required=False)
+    questions = QuestionCreateSerializer(many=True)
+
+    def create(self, validated_data):
+        questions_data = validated_data.pop("questions")
+
+        questionnaire = Questionnaire.objects.create(**validated_data)
+
+        for q in questions_data:
+            options = q.pop("options", [])
+
+            question = Question.objects.create(
+                questionnaire=questionnaire,
+                **q
+            )
+
+            # Si question à choix → créer OptionGroup + options
+            if question.type in ["single_choice", "multiple_choice"] and options:
+                group = OptionGroup.objects.create(name=f"group_{question.id}")
+
+                question.option_group = group
+                question.save()
+
+                for opt in options:
+                    ChoiceOption.objects.create(
+                        option_group=group,
+                        label=opt
+                    )
+
+        return questionnaire        
