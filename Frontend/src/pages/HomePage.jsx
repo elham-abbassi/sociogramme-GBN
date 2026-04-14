@@ -48,7 +48,7 @@ function HomePage() {
               <h3>{questionnaire.title}</h3>
               <p>{questionnaire.description}</p>
 
-              <Link to={`/questionnaire/${questionnaire.id}`}>
+              <Link to={`/respondent-info/${questionnaire.id}`}>
                 Répondre au questionnaire
               </Link>
             </div>

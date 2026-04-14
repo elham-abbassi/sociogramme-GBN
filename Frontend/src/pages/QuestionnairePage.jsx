@@ -1,14 +1,20 @@
 
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import Select from "react-select";
+
 
 function QuestionnairePage() {
-  const { id } = useParams();
+  const { id } = useParams(); 
+  const navigate = useNavigate();
 
   const [questionnaire, setQuestionnaire] = useState(null);
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState({});
+
+  const respondentName = localStorage.getItem("respondentName") || "";
+  const respondentDepartment = localStorage.getItem("respondentDepartment") || "";
 
   useEffect(() => {
     const fetchQuestionnaire = async () => {
@@ -25,6 +31,9 @@ function QuestionnairePage() {
 
     fetchQuestionnaire();
   }, [id]);
+
+  if (loading) return <p>Chargement...</p>;
+  if (!questionnaire) return <p>Questionnaire introuvable.</p>;
 
   const handleChange = (questionId, value) => {
     setAnswers((prevAnswers) => ({
@@ -53,24 +62,31 @@ function QuestionnairePage() {
     });
   };
 
-  const handleMultiSelectChange = (questionId, selectedOptions) => {
-  const values = Array.from(selectedOptions, (option) => option.value);
 
-    setAnswers((prevAnswers) => ({
-      ...prevAnswers,
-      [questionId]: values,
-    }));
-  };
+  const handleMultiSelect = (questionId, selectedOptions) => {
+  const values = selectedOptions
+    ? selectedOptions.map((opt) => opt.value)
+    : [];
 
+  setAnswers((prev) => ({
+    ...prev,
+    [questionId]: values,
+  }));
+};
 
-  const handleSubmit = async () => {
+const handleSubmit = async () => {
   if (!questionnaire) return;
+
+  if (!respondentName || !respondentDepartment) {
+    alert("Informations utilisateur manquantes.");
+    return;
+  }
 
   const formattedAnswers = Object.keys(answers).map((questionId) => {
     const answerValue = answers[questionId];
 
     return {
-      question: parseInt(questionId),
+      question: parseInt(questionId, 10),
       value: Array.isArray(answerValue)
         ? JSON.stringify(answerValue)
         : answerValue,
@@ -79,25 +95,36 @@ function QuestionnairePage() {
 
   const payload = {
     questionnaire: questionnaire.id,
+    respondent_name: respondentName,
+    department: respondentDepartment,
     answers: formattedAnswers,
   };
+
+  console.log("Sending:", payload);
 
   try {
     await api.post("/responses/", payload);
     alert("Réponses envoyées avec succès !");
+
+    setAnswers({});
+    localStorage.removeItem("respondentName");
+    localStorage.removeItem("respondentDepartment");
+
+    navigate("/");
   } catch (error) {
-    console.error("Erreur lors de l'envoi :", error);
+    console.error("Erreur lors de l'envoi des réponses:", error);
     alert("Erreur lors de l'envoi des réponses.");
   }
 };
 
-  if (loading) return <p>Chargement...</p>;
-  if (!questionnaire) return <p>Questionnaire introuvable.</p>;
+
 
   return (
     <div style={{ padding: "20px" }}>
       <h1>{questionnaire.title}</h1>
       <p>{questionnaire.description}</p>
+      <p><strong>Nom :</strong> {respondentName}</p>
+      <p><strong>Département :</strong> {respondentDepartment}</p>
     <form>
     {questionnaire.questions.map((q) => (
     <div key={q.id} style={{ marginBottom: "20px" }}>
@@ -139,32 +166,25 @@ function QuestionnairePage() {
 
   {q.type === "multiple_choice" && q.display_mode === "multi_select" && (
   <div style={{ display: "flex", gap: "30px", alignItems: "flex-start" }}>
-    <select
-      multiple
-      onChange={(e) =>
-        handleMultiSelectChange(q.id, e.target.selectedOptions)
-      }
-      style={{ width: "300px", minHeight: "120px" }}
-    >
-      {q.options.map((opt) => (
-        <option key={opt.id} value={opt.label}>
-          {opt.label}
-        </option>
-      ))}
-    </select>
-
-    <div>
-      <strong>Réponses choisies :</strong>
-      {(answers[q.id] || []).length === 0 ? (
-        <p>Aucune réponse sélectionnée</p>
-      ) : (
-        <ul>
-          {(answers[q.id] || []).map((item, index) => (
-            <li key={index}>{item}</li>
-          ))}
-        </ul>
-      )}
-    </div>
+    <Select
+    isMulti
+    options={q.options
+      .slice()
+      .sort((a, b) => a.label.localeCompare(b.label))
+      .map((opt) => ({
+        value: opt.label,
+        label: opt.label,
+    }))}
+    styles={{
+      container: (base) => ({
+        ...base,
+        width: "300px",
+      }),
+    }}
+    onChange={(selectedOptions) =>
+      handleMultiSelect(q.id, selectedOptions)
+    }
+  />
   </div>
 )}
 

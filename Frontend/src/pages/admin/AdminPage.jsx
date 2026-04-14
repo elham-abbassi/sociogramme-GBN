@@ -30,6 +30,13 @@ function AdminPage() {
     <div style={{ padding: "20px" }}>
       <h1>Admin Dashboard</h1>
       <p>Gérez les questionnaires et consultez les analyses.</p>
+      <div style={{ marginBottom: "20px" }}>
+        <Link to="/admin/create-questionnaire">
+          <button style={{ padding: "10px" }}>
+            Créer un questionnaire
+          </button>
+        </Link>
+      </div>
 
       {questionnaires.length === 0 ? (
         <p>Aucun questionnaire trouvé.</p>
@@ -49,7 +56,7 @@ function AdminPage() {
               <p>{questionnaire.description}</p>
 
               <Link
-                to={`/analysis/${questionnaire.id}`}
+                to={`/admin/analysis/${questionnaire.id}`}
                 style={{ marginRight: "12px" }}
               >
                 Voir analyse

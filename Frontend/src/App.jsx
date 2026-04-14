@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage.jsx";
+import InfoPage from "./pages/InfoPage.jsx";
 import QuestionnairePage from "./pages/QuestionnairePage.jsx";
 import AnalysisPage from "./pages/admin/AnalysisPage.jsx";
 import AdminPage from "./pages/admin/AdminPage.jsx";
@@ -11,6 +12,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/respondent-info/:id" element={<InfoPage />} />
         <Route path="/questionnaire/:id" element={<QuestionnairePage />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/admin/analysis/:id" element={<AnalysisPage />} />
