@@ -12,8 +12,8 @@ class Response(models.Model):
     department = models.CharField(max_length=255, blank=True, default="")
     submitted_at = models.DateTimeField(auto_now_add=True)
 
-def __str__(self):
-    return f"{self.respondent_name} - {self.questionnaire.title}"   
+    def __str__(self):
+        return f"{self.respondent_name} - {self.questionnaire.title}"   
 
 
 class Answer(models.Model):

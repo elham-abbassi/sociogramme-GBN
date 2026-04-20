@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
 function ImportParticipants() {
@@ -77,6 +77,12 @@ function AdminPage() {
   const [questionnaires, setQuestionnaires] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("adminToken");
+    navigate("/admin/login");
+  };
 
   useEffect(() => {
     const fetchQuestionnaires = async () => {
@@ -99,7 +105,15 @@ function AdminPage() {
 
   return (
     <div style={{ padding: "20px" }}>
-      <h1>Admin Dashboard</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h1 style={{ margin: 0 }}>Admin Dashboard</h1>
+        <button
+          onClick={handleLogout}
+          style={{ padding: "8px 16px", cursor: "pointer", color: "#666" }}
+        >
+          Se déconnecter
+        </button>
+      </div>
       <p>Gérez les questionnaires et consultez les analyses.</p>
 
       <ImportParticipants />
