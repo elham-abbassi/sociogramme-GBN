@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import logo from "../../assets/logo.png";
 
 function AdminLoginPage() {
   const [password, setPassword] = useState("");
@@ -24,67 +25,36 @@ function AdminLoginPage() {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "100vh",
-        background: "#f5f5f5",
-      }}
-    >
-      <div
-        style={{
-          background: "#fff",
-          padding: "40px",
-          borderRadius: "10px",
-          border: "1px solid #ddd",
-          width: "320px",
-        }}
-      >
-        <h2 style={{ margin: "0 0 24px", textAlign: "center" }}>Admin</h2>
+    <div className="login-page">
+      <div className="login-box">
+        <div className="login-logo">
+          <img src={logo} alt="GBN Logo" />
+        </div>
 
-        <label style={{ fontSize: "13px", color: "#555" }}>Mot de passe</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-          placeholder="••••••••"
-          style={{
-            display: "block",
-            width: "100%",
-            padding: "10px",
-            margin: "6px 0 16px",
-            borderRadius: "6px",
-            border: "1px solid #ccc",
-            fontSize: "14px",
-            boxSizing: "border-box",
-          }}
-        />
+        <h2 style={{ textAlign: "center", marginBottom: "24px" }}>Espace Admin</h2>
+
+        <div className="form-group">
+          <label className="form-label">Mot de passe</label>
+          <input
+            type="password"
+            className="input"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+            placeholder="••••••••"
+          />
+        </div>
 
         <button
+          className="btn btn-primary"
           onClick={handleLogin}
           disabled={loading}
-          style={{
-            width: "100%",
-            padding: "10px",
-            background: "#4e79a7",
-            color: "#fff",
-            border: "none",
-            borderRadius: "6px",
-            fontSize: "15px",
-            cursor: loading ? "not-allowed" : "pointer",
-          }}
+          style={{ width: "100%", justifyContent: "center" }}
         >
           {loading ? "Connexion..." : "Se connecter"}
         </button>
 
-        {error && (
-          <p style={{ color: "red", marginTop: "12px", textAlign: "center", fontSize: "13px" }}>
-            {error}
-          </p>
-        )}
+        {error && <p className="msg-error" style={{ textAlign: "center" }}>{error}</p>}
       </div>
     </div>
   );

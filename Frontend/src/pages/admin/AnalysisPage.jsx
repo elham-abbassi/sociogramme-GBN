@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import api from "../../services/api";
+import Navbar from "../../components/Navbar";
 import {
   BarChart,
   Bar,
@@ -274,35 +275,35 @@ function AnalysisPage() {
     fetchAnalysis();
   }, [id]);
 
-  if (loading) return <p style={{ padding: "20px" }}>Chargement de l'analyse...</p>;
-  if (error) return <p style={{ padding: "20px", color: "red" }}>{error}</p>;
-  if (!analysis) return <p style={{ padding: "20px" }}>Aucune analyse trouvée.</p>;
+  if (loading) return <><Navbar /><p className="loading">Chargement de l'analyse...</p></>;
+  if (error)   return <><Navbar /><p className="error">{error}</p></>;
+  if (!analysis) return <><Navbar /><p className="loading">Aucune analyse trouvée.</p></>;
 
   const hasSociogram = analysis.sociogram?.nodes?.length > 0;
   const hasDeptInteractions = analysis.department_interactions?.length > 0;
   const totalResponses = analysis.questions[0]?.total_answers ?? 0;
 
   return (
-    <div style={{ padding: "20px", maxWidth: "960px" }}>
-      <Link to="/admin" style={{ fontSize: "14px" }}>
-        ← Retour au dashboard
-      </Link>
+    <>
+    <Navbar />
+    <div className="page">
+      <Link to="/admin" className="back-link">← Retour au dashboard</Link>
 
-      <h1 style={{ marginTop: "16px" }}>Analyse : {analysis.title}</h1>
+      <h1>Analyse : {analysis.title}</h1>
 
       {/* ── Overview stats ── */}
-      <div style={{ display: "flex", gap: "16px", marginBottom: "32px", flexWrap: "wrap" }}>
-        <div style={{ background: "#f0f4ff", padding: "16px 28px", borderRadius: "8px", textAlign: "center" }}>
-          <div style={{ fontSize: "28px", fontWeight: "bold" }}>{totalResponses}</div>
-          <div style={{ fontSize: "13px", color: "#555" }}>Réponses au total</div>
+      <div className="stat-row">
+        <div className="stat-card">
+          <div className="stat-value">{totalResponses}</div>
+          <div className="stat-label">Réponses au total</div>
         </div>
-        <div style={{ background: "#f0f4ff", padding: "16px 28px", borderRadius: "8px", textAlign: "center" }}>
-          <div style={{ fontSize: "28px", fontWeight: "bold" }}>{analysis.questions.length}</div>
-          <div style={{ fontSize: "13px", color: "#555" }}>Questions</div>
+        <div className="stat-card">
+          <div className="stat-value">{analysis.questions.length}</div>
+          <div className="stat-label">Questions</div>
         </div>
-        <div style={{ background: "#f0f4ff", padding: "16px 28px", borderRadius: "8px", textAlign: "center" }}>
-          <div style={{ fontSize: "28px", fontWeight: "bold" }}>{analysis.sociogram?.nodes?.length ?? 0}</div>
-          <div style={{ fontSize: "13px", color: "#555" }}>Personnes dans le sociogramme</div>
+        <div className="stat-card">
+          <div className="stat-value">{analysis.sociogram?.nodes?.length ?? 0}</div>
+          <div className="stat-label">Personnes dans le sociogramme</div>
         </div>
       </div>
 
@@ -332,23 +333,7 @@ function AnalysisPage() {
 
       {/* ── Per-question detail (collapsible) ── */}
       <div style={{ marginBottom: "40px" }}>
-        <button
-          onClick={() => setDetailOpen((o) => !o)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            background: "none",
-            border: "1px solid #ddd",
-            borderRadius: "8px",
-            padding: "10px 18px",
-            cursor: "pointer",
-            fontSize: "15px",
-            fontWeight: "bold",
-            width: "100%",
-            textAlign: "left",
-          }}
-        >
+        <button className="collapse-btn" onClick={() => setDetailOpen((o) => !o)}>
           <span>{detailOpen ? "▼" : "▶"}</span>
           Détail par question ({analysis.questions.length} questions)
         </button>
@@ -356,17 +341,9 @@ function AnalysisPage() {
         {detailOpen && (
           <div style={{ marginTop: "16px" }}>
             {analysis.questions.map((question) => (
-              <div
-                key={question.question_id}
-                style={{
-                  border: "1px solid #ddd",
-                  borderRadius: "8px",
-                  padding: "16px",
-                  marginBottom: "24px",
-                }}
-              >
+              <div key={question.question_id} className="card">
                 <h3 style={{ margin: "0 0 4px" }}>{question.question_text}</h3>
-                <p style={{ margin: "0 0 8px", color: "#666", fontSize: "13px" }}>
+                <p style={{ margin: "0 0 12px", color: "var(--text-light)", fontSize: "13px" }}>
                   Type : <strong>{question.question_type}</strong> &nbsp;|&nbsp; Réponses :{" "}
                   <strong>{question.total_answers}</strong>
                 </p>
@@ -377,6 +354,7 @@ function AnalysisPage() {
         )}
       </div>
     </div>
+    </>
   );
 }
 

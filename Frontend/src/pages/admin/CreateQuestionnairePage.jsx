@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../../services/api";
+import Navbar from "../../components/Navbar";
 
 function CreateQuestionnairePage() {
   const [title, setTitle] = useState("");
@@ -7,56 +9,35 @@ function CreateQuestionnairePage() {
   const [questions, setQuestions] = useState([]);
   const [message, setMessage] = useState("");
 
-  // Ajouter une question
   const addQuestion = () => {
-    setQuestions([
-      ...questions,
-      {
-        text: "",
-        type: "text",
-        required: true,
-        options: [],
-      },
-    ]);
+    setQuestions([...questions, { text: "", type: "text", required: true, options: [] }]);
   };
 
-  // Modifier une question
   const updateQuestion = (index, field, value) => {
     const updated = [...questions];
     updated[index][field] = value;
     setQuestions(updated);
   };
 
-  // Ajouter une option
   const addOption = (index) => {
     const updated = [...questions];
     updated[index].options.push("");
     setQuestions(updated);
   };
 
-  // Modifier option
   const updateOption = (qIndex, optIndex, value) => {
     const updated = [...questions];
     updated[qIndex].options[optIndex] = value;
     setQuestions(updated);
   };
 
-  // Supprimer question
   const removeQuestion = (index) => {
-    const updated = questions.filter((_, i) => i !== index);
-    setQuestions(updated);
+    setQuestions(questions.filter((_, i) => i !== index));
   };
 
-  // Submit
   const handleSubmit = async () => {
-    const data = {
-      title,
-      description,
-      questions,
-    };
-
     try {
-      await api.post("/questionnaires/create/", data);
+      await api.post("/questionnaires/create/", { title, description, questions });
       setMessage("Questionnaire créé avec succès !");
       setTitle("");
       setDescription("");
@@ -68,96 +49,107 @@ function CreateQuestionnairePage() {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Créer un questionnaire</h1>
+    <>
+      <Navbar />
+      <div className="page">
+        <Link to="/admin" className="back-link">← Retour au dashboard</Link>
+        <h1>Créer un questionnaire</h1>
 
-      <input
-        type="text"
-        placeholder="Titre"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        style={{ display: "block", marginBottom: "10px", width: "300px" }}
-      />
+        <div className="card">
+          <div className="form-group">
+            <label className="form-label">Titre</label>
+            <input
+              type="text"
+              className="input"
+              placeholder="Titre du questionnaire"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Description</label>
+            <textarea
+              className="textarea"
+              placeholder="Description (optionnelle)"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+            />
+          </div>
+        </div>
 
-      <textarea
-        placeholder="Description"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        style={{ display: "block", marginBottom: "20px", width: "300px" }}
-      />
-
-      <button onClick={addQuestion}>Ajouter une question</button>
-
-      {questions.map((q, index) => (
-        <div
-          key={index}
-          style={{
-            border: "1px solid #ccc",
-            padding: "10px",
-            marginTop: "15px",
-          }}
-        >
-          <input
-            type="text"
-            placeholder="Texte de la question"
-            value={q.text}
-            onChange={(e) =>
-              updateQuestion(index, "text", e.target.value)
-            }
-          />
-
-          <br />
-
-          <select
-            value={q.type}
-            onChange={(e) =>
-              updateQuestion(index, "type", e.target.value)
-            }
-          >
-            <option value="text">Texte</option>
-            <option value="number">Nombre</option>
-            <option value="single_choice">Choix unique</option>
-            <option value="multiple_choice">Choix multiple</option>
-          </select>
-
-          <br />
-
-          {(q.type === "single_choice" ||
-            q.type === "multiple_choice") && (
-            <div>
-              <p>Options :</p>
-
-              {q.options.map((opt, optIndex) => (
-                <input
-                  key={optIndex}
-                  type="text"
-                  placeholder="Option"
-                  value={opt}
-                  onChange={(e) =>
-                    updateOption(index, optIndex, e.target.value)
-                  }
-                />
-              ))}
-
-              <br />
-              <button onClick={() => addOption(index)}>
-                Ajouter option
+        {questions.map((q, index) => (
+          <div key={index} className="card">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+              <strong>Question {index + 1}</strong>
+              <button className="btn btn-danger" onClick={() => removeQuestion(index)}>
+                Supprimer
               </button>
             </div>
-          )}
 
-          <br />
-          <button onClick={() => removeQuestion(index)}>
-            Supprimer question
+            <div className="form-group">
+              <label className="form-label">Texte de la question</label>
+              <input
+                type="text"
+                className="input"
+                placeholder="Texte de la question"
+                value={q.text}
+                onChange={(e) => updateQuestion(index, "text", e.target.value)}
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Type</label>
+              <select
+                className="select"
+                value={q.type}
+                onChange={(e) => updateQuestion(index, "type", e.target.value)}
+              >
+                <option value="text">Texte</option>
+                <option value="number">Nombre</option>
+                <option value="single_choice">Choix unique</option>
+                <option value="multiple_choice">Choix multiple</option>
+              </select>
+            </div>
+
+            {(q.type === "single_choice" || q.type === "multiple_choice") && (
+              <div className="form-group">
+                <label className="form-label">Options</label>
+                {q.options.map((opt, optIndex) => (
+                  <input
+                    key={optIndex}
+                    type="text"
+                    className="input"
+                    style={{ marginBottom: "6px" }}
+                    placeholder={`Option ${optIndex + 1}`}
+                    value={opt}
+                    onChange={(e) => updateOption(index, optIndex, e.target.value)}
+                  />
+                ))}
+                <button className="btn btn-secondary" onClick={() => addOption(index)} style={{ marginTop: "6px" }}>
+                  + Ajouter une option
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+
+        <div style={{ display: "flex", gap: "12px", marginTop: "8px" }}>
+          <button className="btn btn-secondary" onClick={addQuestion}>
+            + Ajouter une question
+          </button>
+          <button className="btn btn-primary" onClick={handleSubmit}>
+            Créer le questionnaire
           </button>
         </div>
-      ))}
 
-      <br />
-      <button onClick={handleSubmit}>Créer questionnaire</button>
-
-      {message && <p>{message}</p>}
-    </div>
+        {message && (
+          <p className={message.includes("succès") ? "msg-success" : "msg-error"} style={{ marginTop: "16px" }}>
+            {message}
+          </p>
+        )}
+      </div>
+    </>
   );
 }
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../services/api";
+import Navbar from "../components/Navbar";
 
 function InfoPage() {
   const { id } = useParams();
@@ -21,49 +22,52 @@ function InfoPage() {
       alert("Veuillez remplir votre nom et votre département.");
       return;
     }
-
     localStorage.setItem("respondentName", name);
     localStorage.setItem("respondentDepartment", department);
-
     navigate(`/questionnaire/${id}`);
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Informations personnelles</h1>
-      <p>Veuillez remplir vos informations avant de commencer le questionnaire.</p>
+    <>
+      <Navbar />
+      <div className="page" style={{ maxWidth: "500px" }}>
+        <h1>Informations personnelles</h1>
+        <p style={{ color: "var(--text-light)", marginBottom: "24px" }}>
+          Veuillez remplir vos informations avant de commencer le questionnaire.
+        </p>
 
-      <div style={{ marginBottom: "12px" }}>
-        <label>Nom</label>
-        <br />
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Votre nom"
-          style={{ width: "300px", padding: "8px" }}
-        />
+        <div className="card">
+          <div className="form-group">
+            <label className="form-label">Nom</label>
+            <input
+              type="text"
+              className="input"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Votre nom"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Département</label>
+            <select
+              className="select"
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+            >
+              <option value="">-- Choisissez votre département --</option>
+              {departments.map((dept) => (
+                <option key={dept} value={dept}>{dept}</option>
+              ))}
+            </select>
+          </div>
+
+          <button className="btn btn-primary" onClick={handleContinue}>
+            Continuer →
+          </button>
+        </div>
       </div>
-
-      <div style={{ marginBottom: "12px" }}>
-        <label>Département</label>
-        <br />
-        <select
-          value={department}
-          onChange={(e) => setDepartment(e.target.value)}
-          style={{ width: "300px", padding: "8px" }}
-        >
-          <option value="">-- Choisissez votre département --</option>
-          {departments.map((dept) => (
-            <option key={dept} value={dept}>
-              {dept}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <button onClick={handleContinue}>Continuer</button>
-    </div>
+    </>
   );
 }
 

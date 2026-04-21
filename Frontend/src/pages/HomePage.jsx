@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api";
+import Navbar from "../components/Navbar";
 
 function HomePage() {
   const [questionnaires, setQuestionnaires] = useState([]);
@@ -19,43 +20,36 @@ function HomePage() {
         setLoading(false);
       }
     };
-
     fetchQuestionnaires();
   }, []);
 
-  if (loading) return <p>Chargement...</p>;
-  if (error) return <p>{error}</p>;
+  if (loading) return <><Navbar /><p className="loading">Chargement...</p></>;
+  if (error)   return <><Navbar /><p className="error">{error}</p></>;
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Liste des questionnaires</h1>
-      <p>Choisissez un questionnaire pour répondre.</p>
+    <>
+      <Navbar />
+      <div className="page">
+        <h1>Questionnaires</h1>
+        <p style={{ color: "var(--text-light)", marginBottom: "24px" }}>
+          Choisissez un questionnaire pour répondre.
+        </p>
 
-      {questionnaires.length === 0 ? (
-        <p>Aucun questionnaire trouvé.</p>
-      ) : (
-        <div>
-          {questionnaires.map((questionnaire) => (
-            <div
-              key={questionnaire.id}
-              style={{
-                border: "1px solid #ccc",
-                borderRadius: "8px",
-                padding: "16px",
-                marginBottom: "16px",
-              }}
-            >
-              <h3>{questionnaire.title}</h3>
-              <p>{questionnaire.description}</p>
-
-              <Link to={`/respondent-info/${questionnaire.id}`}>
+        {questionnaires.length === 0 ? (
+          <p>Aucun questionnaire trouvé.</p>
+        ) : (
+          questionnaires.map((q) => (
+            <div key={q.id} className="card">
+              <div className="card-title">{q.title}</div>
+              <div className="card-desc">{q.description}</div>
+              <Link to={`/respondent-info/${q.id}`} className="btn btn-primary">
                 Répondre au questionnaire
               </Link>
             </div>
-          ))}
-        </div>
-      )}
-    </div>
+          ))
+        )}
+      </div>
+    </>
   );
 }
 

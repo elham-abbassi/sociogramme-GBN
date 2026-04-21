@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import Navbar from "../../components/Navbar";
 
 function ImportParticipants() {
   const fileRef = useRef(null);
@@ -16,7 +17,6 @@ function ImportParticipants() {
 
     const formData = new FormData();
     formData.append("file", file);
-
     setLoading(true);
     setMessage("");
 
@@ -34,38 +34,19 @@ function ImportParticipants() {
   };
 
   return (
-    <div
-      style={{
-        border: "1px solid #ddd",
-        borderRadius: "8px",
-        padding: "16px",
-        marginBottom: "24px",
-        background: "#fafafa",
-      }}
-    >
-      <h3 style={{ margin: "0 0 8px" }}>Importer la liste des participants</h3>
-      <p style={{ margin: "0 0 12px", color: "#666", fontSize: "13px" }}>
-        Fichier Excel (.xlsx) avec les noms dans la première colonne.
-        Chaque upload remplace la liste existante.
+    <div className="import-box">
+      <h3 style={{ margin: "0 0 4px" }}>Importer la liste des participants</h3>
+      <p style={{ color: "var(--text-light)", fontSize: "13px", margin: "0 0 10px" }}>
+        Fichier Excel (.xlsx) avec les noms dans la première colonne. Chaque upload remplace la liste existante.
       </p>
-      <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+      <div className="import-row">
         <input ref={fileRef} type="file" accept=".xlsx" />
-        <button
-          onClick={handleImport}
-          disabled={loading}
-          style={{ padding: "8px 16px", cursor: loading ? "not-allowed" : "pointer" }}
-        >
+        <button className="btn btn-primary" onClick={handleImport} disabled={loading}>
           {loading ? "Import en cours..." : "Importer"}
         </button>
       </div>
       {message && (
-        <p
-          style={{
-            marginTop: "10px",
-            color: message.startsWith("✓") ? "green" : "red",
-            fontSize: "13px",
-          }}
-        >
+        <p className={message.startsWith("✓") ? "msg-success" : "msg-error"}>
           {message}
         </p>
       )}
@@ -79,85 +60,63 @@ function AdminPage() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  useEffect(() => {
+    api.get("/questionnaires/")
+      .then((res) => setQuestionnaires(res.data))
+      .catch((err) => {
+        console.error(err);
+        setError("Erreur lors du chargement des questionnaires.");
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
     navigate("/admin/login");
   };
 
-  useEffect(() => {
-    const fetchQuestionnaires = async () => {
-      try {
-        const response = await api.get("/questionnaires/");
-        setQuestionnaires(response.data);
-      } catch (err) {
-        console.error(err);
-        setError("Erreur lors du chargement des questionnaires.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchQuestionnaires();
-  }, []);
-
-  if (loading) return <p>Chargement...</p>;
-  if (error) return <p>{error}</p>;
+  if (loading) return <><Navbar /><p className="loading">Chargement...</p></>;
+  if (error)   return <><Navbar /><p className="error">{error}</p></>;
 
   return (
-    <div style={{ padding: "20px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1 style={{ margin: 0 }}>Admin Dashboard</h1>
-        <button
-          onClick={handleLogout}
-          style={{ padding: "8px 16px", cursor: "pointer", color: "#666" }}
-        >
-          Se déconnecter
-        </button>
-      </div>
-      <p>Gérez les questionnaires et consultez les analyses.</p>
-
-      <ImportParticipants />
-
-      <div style={{ marginBottom: "20px" }}>
-        <Link to="/admin/create-questionnaire">
-          <button style={{ padding: "10px" }}>
-            Créer un questionnaire
+    <>
+      <Navbar />
+      <div className="page">
+        <div className="section-header">
+          <h1 style={{ margin: 0 }}>Admin Dashboard</h1>
+          <button className="btn btn-secondary" onClick={handleLogout}>
+            Se déconnecter
           </button>
-        </Link>
-      </div>
-
-      {questionnaires.length === 0 ? (
-        <p>Aucun questionnaire trouvé.</p>
-      ) : (
-        <div>
-          {questionnaires.map((questionnaire) => (
-            <div
-              key={questionnaire.id}
-              style={{
-                border: "1px solid #ccc",
-                borderRadius: "8px",
-                padding: "16px",
-                marginBottom: "16px",
-              }}
-            >
-              <h3>{questionnaire.title}</h3>
-              <p>{questionnaire.description}</p>
-
-              <Link
-                to={`/admin/analysis/${questionnaire.id}`}
-                style={{ marginRight: "12px" }}
-              >
-                Voir analyse
-              </Link>
-
-              <Link to={`/questionnaire/${questionnaire.id}`}>
-                Voir questionnaire
-              </Link>
-            </div>
-          ))}
         </div>
-      )}
-    </div>
+
+        <ImportParticipants />
+
+        <div style={{ marginBottom: "20px" }}>
+          <Link to="/admin/create-questionnaire" className="btn btn-primary">
+            + Créer un questionnaire
+          </Link>
+        </div>
+
+        {questionnaires.length === 0 ? (
+          <p>Aucun questionnaire trouvé.</p>
+        ) : (
+          questionnaires.map((q) => (
+            <div key={q.id} className="card">
+              <div className="card-title">{q.title}</div>
+              <div className="card-desc">{q.description}</div>
+              <div style={{ display: "flex", gap: "12px" }}>
+                <Link to={`/admin/analysis/${q.id}`} className="btn btn-primary">
+                  Voir analyse
+                </Link>
+                <Link to={`/questionnaire/${q.id}`} className="btn btn-secondary">
+                  Voir questionnaire
+                </Link>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </>
   );
 }
 
