@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>UML — Partie Analyse · GBN Sociogramme</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; padding: 48px 40px; }
+    h1 { font-size: 22px; font-weight: 800; text-align: center; margin-bottom: 6px; color: #0f172a; }
+    .subtitle { text-align: center; font-size: 13px; color: #64748b; margin-bottom: 48px; }
+    h2 { font-size: 16px; font-weight: 700; margin-bottom: 24px; color: #1e40af; border-left: 4px solid #3b82f6; padding-left: 10px; }
+    .section { margin-bottom: 60px; }
+
+    /* ═══════════════════════════════
+       SEQUENCE DIAGRAM
+    ═══════════════════════════════ */
+    .seq { position: relative; width: 100%; overflow-x: auto; }
+    svg text { font-family: 'Segoe UI', sans-serif; }
+
+    /* ═══════════════════════════════
+       CLASS DIAGRAM
+    ═══════════════════════════════ */
+    .class-diagram { display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start; justify-content: center; }
+    .uml-class { border: 2px solid #334155; border-radius: 4px; min-width: 180px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .uml-class .class-name { background: #1e40af; color: #fff; font-weight: 700; font-size: 13px; padding: 8px 14px; text-align: center; border-radius: 2px 2px 0 0; }
+    .uml-class .class-name.green  { background: #166534; }
+    .uml-class .class-name.purple { background: #6b21a8; }
+    .uml-class .class-name.orange { background: #9a3412; }
+    .uml-class .class-name.teal   { background: #0f766e; }
+    .uml-class .class-attrs { padding: 8px 14px; border-top: 1px solid #cbd5e1; font-size: 12px; line-height: 1.8; }
+    .uml-class .class-attrs .attr { color: #475569; }
+    .uml-class .class-attrs .attr span { color: #94a3b8; font-size: 11px; }
+    .uml-class .class-attrs .pk { color: #7c3aed; font-weight: 600; }
+    .uml-class .class-attrs .fk { color: #0891b2; }
+    .uml-class .divider { border: none; border-top: 1px dashed #e2e8f0; margin: 4px 0; }
+
+    .rel-label { font-size: 11px; color: #64748b; text-align: center; margin-top: 6px; }
+
+    .legend { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 16px; font-size: 12px; color: #64748b; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-dot { width: 12px; height: 12px; border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<h1>UML — Partie Analyse</h1>
+<p class="subtitle">GBN Sociogramme · Diagrammes de séquence et de classes</p>
+
+<!-- ══════════════════════════════════════════════════════
+     1. SEQUENCE DIAGRAM
+══════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>1. Diagramme de séquence — Chargement de l'analyse</h2>
+  <div class="seq">
+    <svg width="900" height="740" viewBox="0 0 900 740" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="3.5" orient="auto">
+          <polygon points="0 0, 8 3.5, 0 7" fill="#334155"/>
+        </marker>
+        <marker id="arr-ret" markerWidth="8" markerHeight="8" refX="7" refY="3.5" orient="auto">
+          <polygon points="0 0, 8 3.5, 0 7" fill="#64748b"/>
+        </marker>
+      </defs>
+
+      <!-- Actor boxes -->
+      <!-- Frontend: x=80 -->
+      <rect x="20" y="10" width="120" height="44" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+      <text x="80" y="29" text-anchor="middle" font-weight="700" font-size="12" fill="#1e40af">AnalysisPage</text>
+      <text x="80" y="46" text-anchor="middle" font-size="11" fill="#3b82f6">Frontend (React)</text>
+
+      <!-- analytics: x=300 -->
+      <rect x="240" y="10" width="120" height="44" rx="8" fill="#fef9c3" stroke="#f59e0b" stroke-width="2"/>
+      <text x="300" y="29" text-anchor="middle" font-weight="700" font-size="12" fill="#92400e">analytics/</text>
+      <text x="300" y="46" text-anchor="middle" font-size="11" fill="#b45309">views.py</text>
+
+      <!-- responses: x=520 -->
+      <rect x="460" y="10" width="120" height="44" rx="8" fill="#dcfce7" stroke="#22c55e" stroke-width="2"/>
+      <text x="520" y="29" text-anchor="middle" font-weight="700" font-size="12" fill="#166534">responses/</text>
+      <text x="520" y="46" text-anchor="middle" font-size="11" fill="#16a34a">models</text>
+
+      <!-- DB: x=760 -->
+      <rect x="700" y="10" width="120" height="44" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="2"/>
+      <text x="760" y="29" text-anchor="middle" font-weight="700" font-size="12" fill="#6b21a8">SQLite</text>
+      <text x="760" y="46" text-anchor="middle" font-size="11" fill="#9333ea">Base de données</text>
+
+      <!-- Lifelines -->
+      <line x1="80"  y1="54" x2="80"  y2="730" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <line x1="300" y1="54" x2="300" y2="730" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <line x1="520" y1="54" x2="520" y2="730" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <line x1="760" y1="54" x2="760" y2="730" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,4"/>
+
+      <!-- Activation bars -->
+      <rect x="74"  y="90" width="12" height="600" rx="2" fill="#bfdbfe" stroke="#3b82f6" stroke-width="1"/>
+      <rect x="294" y="110" width="12" height="560" rx="2" fill="#fde68a" stroke="#f59e0b" stroke-width="1"/>
+      <rect x="514" y="140" width="12" height="80"  rx="2" fill="#bbf7d0" stroke="#22c55e" stroke-width="1"/>
+      <rect x="754" y="100" width="12" height="580" rx="2" fill="#e9d5ff" stroke="#a855f7" stroke-width="1"/>
+
+      <!-- ── Messages ── -->
+
+      <!-- 1. GET /analysis/id/ -->
+      <line x1="86" y1="100" x2="294" y2="100" stroke="#334155" stroke-width="1.8" marker-end="url(#arr)"/>
+      <text x="190" y="96" text-anchor="middle" font-size="11" fill="#334155" font-weight="600">GET /analysis/&lt;id&gt;/</text>
+
+      <!-- 2. Questionnaire.get(id) -->
+      <line x1="306" y1="120" x2="754" y2="120" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="530" y="116" text-anchor="middle" font-size="11" fill="#334155">Questionnaire.get(id)</text>
+
+      <!-- 3. return questionnaire -->
+      <line x1="754" y1="140" x2="306" y2="140" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-ret)"/>
+      <text x="530" y="136" text-anchor="middle" font-size="10" fill="#64748b" font-style="italic">questionnaire</text>
+
+      <!-- 4. ChoiceOption.all() -->
+      <line x1="306" y1="162" x2="754" y2="162" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="530" y="158" text-anchor="middle" font-size="11" fill="#334155">ChoiceOption.all()</text>
+
+      <!-- 5. return options -->
+      <line x1="754" y1="182" x2="306" y2="182" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-ret)"/>
+      <text x="530" y="178" text-anchor="middle" font-size="10" fill="#64748b" font-style="italic">→ name_to_group, name_to_dept, name_to_permanent</text>
+
+      <!-- 6. Response.filter() -->
+      <line x1="306" y1="210" x2="514" y2="210" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="410" y="206" text-anchor="middle" font-size="11" fill="#334155">Response.filter(questionnaire)</text>
+
+      <!-- 7. DB query -->
+      <line x1="526" y1="230" x2="754" y2="230" stroke="#334155" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="640" y="226" text-anchor="middle" font-size="11" fill="#334155">SELECT responses + answers</text>
+
+      <!-- 8. return -->
+      <line x1="754" y1="250" x2="526" y2="250" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-ret)"/>
+      <text x="640" y="246" text-anchor="middle" font-size="10" fill="#64748b" font-style="italic">responses + answers</text>
+
+      <!-- 9. return to analytics -->
+      <line x1="514" y1="270" x2="306" y2="270" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-ret)"/>
+      <text x="410" y="266" text-anchor="middle" font-size="10" fill="#64748b" font-style="italic">responses prefetched</text>
+
+      <!-- Processing box -->
+      <rect x="150" y="288" width="320" height="230" rx="8" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6,3"/>
+      <text x="310" y="308" text-anchor="middle" font-size="11" font-weight="700" fill="#92400e">Traitement (analytics/views.py)</text>
+      <text x="160" y="330" font-size="11" fill="#334155">• Créer nœud répondant</text>
+      <text x="160" y="350" font-size="11" fill="#334155">• Créer nœud département + arête membership</text>
+      <text x="160" y="370" font-size="11" fill="#334155">• single_choice → node.attributes[groupe] = valeur</text>
+      <text x="160" y="390" font-size="11" fill="#334155">• multiple_choice (Staffs/Participants)</text>
+      <text x="175" y="408" font-size="11" fill="#334155">→ arêtes choice (sociogramme)</text>
+      <text x="160" y="428" font-size="11" fill="#334155">• multiple_choice (Couleurs, Motivateurs…)</text>
+      <text x="175" y="446" font-size="11" fill="#334155">→ node.attributes[groupe] = [valeurs]</text>
+      <text x="160" y="466" font-size="11" fill="#334155">• Matrice : dept_source × dept_target</text>
+      <text x="160" y="484" font-size="11" fill="#334155">• Distribution par question (Counter)</text>
+      <text x="160" y="504" font-size="11" fill="#334155">• Statistiques numériques (min, max, moy)</text>
+
+      <!-- 10. JSON response -->
+      <line x1="294" y1="540" x2="86" y2="540" stroke="#64748b" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arr-ret)"/>
+      <text x="190" y="536" text-anchor="middle" font-size="11" fill="#334155" font-weight="600">JSON { questions, sociogram, dept_matrix }</text>
+
+      <!-- Render box -->
+      <rect x="10" y="558" width="200" height="110" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="6,3"/>
+      <text x="110" y="576" text-anchor="middle" font-size="11" font-weight="700" fill="#1e40af">Rendu Frontend</text>
+      <text x="20" y="596" font-size="11" fill="#334155">• D3.js → sociogramme</text>
+      <text x="20" y="614" font-size="11" fill="#334155">• Recharts → bar charts</text>
+      <text x="20" y="632" font-size="11" fill="#334155">• Filtres L1/L2 → state React</text>
+      <text x="20" y="650" font-size="11" fill="#334155">• Vue isolée / Sociogramme</text>
+    </svg>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     2. CLASS DIAGRAM
+══════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>2. Diagramme de classes — Modèles impliqués dans l'analyse</h2>
+  <div class="class-diagram">
+
+    <div>
+      <div class="uml-class">
+        <div class="class-name">Questionnaire</div>
+        <div class="class-attrs">
+          <div class="attr pk">+ id : int</div>
+          <div class="attr">+ title : str</div>
+          <div class="attr">+ description : str</div>
+        </div>
+        <hr class="divider"/>
+        <div class="class-attrs">
+          <div class="attr">+ questions (1→*)</div>
+          <div class="attr">+ responses (1→*)</div>
+        </div>
+      </div>
+      <div class="rel-label">1 ──────── * </div>
+    </div>
+
+    <div>
+      <div class="uml-class">
+        <div class="class-name">Question</div>
+        <div class="class-attrs">
+          <div class="attr pk">+ id : int</div>
+          <div class="attr">+ text : str</div>
+          <div class="attr">+ type : choice</div>
+          <div class="attr" style="font-size:10px;color:#94a3b8">  text | number | single_choice</div>
+          <div class="attr" style="font-size:10px;color:#94a3b8">  multiple_choice | person_choice</div>
+          <div class="attr">+ order : int</div>
+          <div class="attr fk">+ option_group : FK</div>
+          <div class="attr fk">+ condition_question : FK(self)</div>
+          <div class="attr">+ condition_value : str</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="uml-class">
+        <div class="class-name green">OptionGroup</div>
+        <div class="class-attrs">
+          <div class="attr pk">+ id : int</div>
+          <div class="attr">+ name : str</div>
+          <div class="attr" style="font-size:10px;color:#94a3b8">  ex: Staffs, Participants,</div>
+          <div class="attr" style="font-size:10px;color:#94a3b8">  Couleurs dominantes,</div>
+          <div class="attr" style="font-size:10px;color:#94a3b8">  Motivateurs, Departement</div>
+        </div>
+        <hr class="divider"/>
+        <div class="class-attrs">
+          <div class="attr">+ options (1→*)</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="uml-class">
+        <div class="class-name green">ChoiceOption</div>
+        <div class="class-attrs">
+          <div class="attr pk">+ id : int</div>
+          <div class="attr">+ label : str</div>
+          <div class="attr">+ department : str</div>
+          <div class="attr">+ is_permanent : bool</div>
+          <div class="attr fk">+ option_group : FK</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="uml-class">
+        <div class="class-name purple">Response</div>
+        <div class="class-attrs">
+          <div class="attr pk">+ id : int</div>
+          <div class="attr fk">+ questionnaire : FK</div>
+          <div class="attr">+ respondent_name : str</div>
+          <div class="attr">+ department : str</div>
+          <div class="attr">+ submitted_at : datetime</div>
+        </div>
+        <hr class="divider"/>
+        <div class="class-attrs">
+          <div class="attr">+ answers (1→*)</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="uml-class">
+        <div class="class-name purple">Answer</div>
+        <div class="class-attrs">
+          <div class="attr pk">+ id : int</div>
+          <div class="attr fk">+ response : FK</div>
+          <div class="attr fk">+ question : FK</div>
+          <div class="attr">+ value : str (JSON)</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="uml-class">
+        <div class="class-name orange">Node (computed)</div>
+        <div class="class-attrs">
+          <div class="attr">+ id : str (nom)</div>
+          <div class="attr">+ department : str</div>
+          <div class="attr">+ group : str</div>
+          <div class="attr">+ is_permanent : bool|null</div>
+          <div class="attr">+ attributes : dict</div>
+          <div class="attr" style="font-size:10px;color:#94a3b8">  { "Couleurs dominantes": ["Rouge"],</div>
+          <div class="attr" style="font-size:10px;color:#94a3b8">    "Motivateurs": ["Autonomie"] }</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="uml-class">
+        <div class="class-name orange">Edge (computed)</div>
+        <div class="class-attrs">
+          <div class="attr">+ source : str</div>
+          <div class="attr">+ target : str</div>
+          <div class="attr">+ weight : int</div>
+          <div class="attr">+ type : choice | membership</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Legend -->
+  <div class="legend" style="margin-top:24px;">
+    <div class="legend-item"><div class="legend-dot" style="background:#1e40af"></div> Questionnaire / Question</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#166534"></div> OptionGroup / ChoiceOption</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#6b21a8"></div> Response / Answer</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#9a3412"></div> Objets calculés par analytics/</div>
+    <div class="legend-item"><span style="color:#7c3aed;font-weight:700">PK</span> Clé primaire</div>
+    <div class="legend-item"><span style="color:#0891b2;font-weight:700">FK</span> Clé étrangère</div>
+  </div>
+</div>
+
+</body>
+</html>

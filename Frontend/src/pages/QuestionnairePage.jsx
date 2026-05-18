@@ -94,8 +94,25 @@ function QuestionnairePage() {
         </div>
 
         <form>
-          {questionnaire.questions.map((q) => (
-            <div key={q.id} className="question-block">
+          {questionnaire.questions.map((q) => {
+            // Hide this question if its condition is not met
+            const isConditional = q.condition_question && q.condition_value;
+            if (isConditional) {
+              const triggerAnswer = answers[q.condition_question];
+              if (triggerAnswer !== q.condition_value) return null;
+            }
+            return (
+            <div key={q.id} className="question-block" style={isConditional ? { marginLeft: "24px", borderLeft: "3px solid #0796cb", paddingLeft: "16px" } : {}}>
+              {isConditional && (
+                <div style={{
+                  display: "inline-flex", alignItems: "center", gap: "6px",
+                  background: "#e8f4fb", border: "1px solid #b3d8ee",
+                  borderRadius: "6px", padding: "4px 10px", marginBottom: "10px",
+                  fontSize: "12px", color: "#0796cb",
+                }}>
+                  Suite à votre réponse :<strong>&ldquo;{q.condition_value}&rdquo;</strong>
+                </div>
+              )}
               <p className="question-text">{q.text}</p>
 
               {q.type === "multiple_choice" && q.display_mode === "checkbox" && (
@@ -177,7 +194,8 @@ function QuestionnairePage() {
                 />
               )}
             </div>
-          ))}
+            );
+          })}
 
           <button type="button" className="btn btn-primary" onClick={handleSubmit}>
             Envoyer les réponses

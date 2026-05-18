@@ -38,13 +38,13 @@ function InfoPage() {
 
         <div className="card">
           <div className="form-group">
-            <label className="form-label">Nom</label>
+            <label className="form-label">NOM, Prénom</label>
             <input
               type="text"
               className="input"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Votre nom"
+              placeholder="Votre Nom et Prénom"
             />
           </div>
 

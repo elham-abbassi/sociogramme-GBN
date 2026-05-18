@@ -1,32 +1,60 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import api from "../../services/api";
 import Navbar from "../../components/Navbar";
 
-function CreateQuestionnairePage() {
+function EditQuestionnairePage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    api.get(`/questionnaires/${id}/`).then((res) => {
+      const q = res.data;
+      setTitle(q.title);
+      setDescription(q.description || "");
+
+      // Map API questions → form format
+      const mapped = q.questions.map((ques) => ({
+        id: ques.id,
+        text: ques.text,
+        type: ques.type,
+        required: ques.required,
+        options: ques.options.map((o) => o.label),
+        condition_question_index: -1,  // resolved below
+        condition_value: ques.condition_value || "",
+        _condition_question_id: ques.condition_question,  // raw FK id
+      }));
+
+      // Resolve condition_question FK id → index in the list
+      mapped.forEach((q, i) => {
+        if (q._condition_question_id) {
+          const idx = mapped.findIndex((m) => m.id === q._condition_question_id);
+          if (idx >= 0) mapped[i].condition_question_index = idx;
+        }
+      });
+
+      setQuestions(mapped);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [id]);
 
   const addQuestion = () => {
     setQuestions([...questions, {
-      text: "",
-      type: "text",
-      required: true,
-      options: [],
-      condition_question_index: -1,
-      condition_value: "",
+      text: "", type: "text", required: true, options: [],
+      condition_question_index: -1, condition_value: "",
     }]);
   };
 
   const updateQuestion = (index, field, value) => {
     const updated = [...questions];
     updated[index][field] = value;
-    // Reset condition if the trigger question or its options change
-    if (field === "condition_question_index") {
-      updated[index].condition_value = "";
-    }
+    if (field === "condition_question_index") updated[index].condition_value = "";
     setQuestions(updated);
   };
 
@@ -43,61 +71,44 @@ function CreateQuestionnairePage() {
   };
 
   const removeQuestion = (index) => {
-    // Fix condition_question_index references after removal
     const updated = questions
       .filter((_, i) => i !== index)
       .map((q) => {
-        if (q.condition_question_index === index) {
-          return { ...q, condition_question_index: -1, condition_value: "" };
-        }
-        if (q.condition_question_index > index) {
-          return { ...q, condition_question_index: q.condition_question_index - 1 };
-        }
+        if (q.condition_question_index === index) return { ...q, condition_question_index: -1, condition_value: "" };
+        if (q.condition_question_index > index) return { ...q, condition_question_index: q.condition_question_index - 1 };
         return q;
       });
     setQuestions(updated);
   };
 
   const handleSubmit = async () => {
+    setMessage("");
     try {
-      await api.post("/questionnaires/create/", { title, description, questions });
-      setMessage("Questionnaire créé avec succès !");
-      setTitle("");
-      setDescription("");
-      setQuestions([]);
-    } catch (error) {
-      console.error(error);
-      setMessage("Erreur lors de la création.");
+      await api.put(`/questionnaires/${id}/update/`, { title, description, questions });
+      setMessage("✓ Questionnaire mis à jour avec succès !");
+    } catch (err) {
+      console.error(err);
+      setMessage("Erreur lors de la mise à jour.");
     }
   };
+
+  if (loading) return <><Navbar /><p className="loading">Chargement...</p></>;
 
   return (
     <>
       <Navbar />
       <div className="page">
         <Link to="/admin" className="back-link">← Retour au dashboard</Link>
-        <h1>Créer un questionnaire</h1>
+        <h1>Modifier le questionnaire</h1>
 
         <div className="card">
           <div className="form-group">
             <label className="form-label">Titre</label>
-            <input
-              type="text"
-              className="input"
-              placeholder="Titre du questionnaire"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
+            <input type="text" className="input" value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
           <div className="form-group">
             <label className="form-label">Description</label>
-            <textarea
-              className="textarea"
-              placeholder="Description (optionnelle)"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-            />
+            <textarea className="textarea" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
           </div>
         </div>
 
@@ -107,11 +118,7 @@ function CreateQuestionnairePage() {
             .map((prev, i) => ({ ...prev, _index: i }))
             .filter((prev) => prev.type === "single_choice" && prev.options.some((o) => o.trim()));
 
-          const triggerQuestion = q.condition_question_index >= 0
-            ? questions[q.condition_question_index]
-            : null;
-
-          // How many questions depend on this one
+          const triggerQuestion = q.condition_question_index >= 0 ? questions[q.condition_question_index] : null;
           const dependentCount = questions.filter((other) => other.condition_question_index === index).length;
           const isConditional = q.condition_question_index >= 0 && q.condition_value;
 
@@ -135,7 +142,6 @@ function CreateQuestionnairePage() {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                   <strong>Question {index + 1}</strong>
-                  {/* Trigger badge — shown on questions that have dependents */}
                   {dependentCount > 0 && (
                     <span style={{
                       background: "#fff3cd", border: "1px solid #ffc107",
@@ -146,29 +152,17 @@ function CreateQuestionnairePage() {
                     </span>
                   )}
                 </div>
-                <button className="btn btn-danger" onClick={() => removeQuestion(index)}>
-                  Supprimer
-                </button>
+                <button className="btn btn-danger" onClick={() => removeQuestion(index)}>Supprimer</button>
               </div>
 
               <div className="form-group">
                 <label className="form-label">Texte de la question</label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="Texte de la question"
-                  value={q.text}
-                  onChange={(e) => updateQuestion(index, "text", e.target.value)}
-                />
+                <input type="text" className="input" value={q.text} onChange={(e) => updateQuestion(index, "text", e.target.value)} />
               </div>
 
               <div className="form-group">
                 <label className="form-label">Type</label>
-                <select
-                  className="select"
-                  value={q.type}
-                  onChange={(e) => updateQuestion(index, "type", e.target.value)}
-                >
+                <select className="select" value={q.type} onChange={(e) => updateQuestion(index, "type", e.target.value)}>
                   <option value="text">Texte</option>
                   <option value="number">Nombre</option>
                   <option value="single_choice">Choix unique</option>
@@ -196,19 +190,11 @@ function CreateQuestionnairePage() {
                 </div>
               )}
 
-              {/* Conditional logic — only available if there are eligible trigger questions before this one */}
               {index > 0 && (
-                <div style={{
-                  marginTop: "12px",
-                  padding: "12px 14px",
-                  background: "#f4f8fb",
-                  border: "1px solid var(--border)",
-                  borderRadius: "8px",
-                }}>
+                <div style={{ marginTop: "12px", padding: "12px 14px", background: "#f4f8fb", border: "1px solid var(--border)", borderRadius: "8px" }}>
                   <label style={{ fontSize: "13px", fontWeight: "600", color: "var(--text-light)", display: "block", marginBottom: "8px" }}>
                     Question conditionnelle (optionnel)
                   </label>
-
                   <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
                     <span style={{ fontSize: "13px" }}>Afficher si la question</span>
                     <select
@@ -224,7 +210,6 @@ function CreateQuestionnairePage() {
                         </option>
                       ))}
                     </select>
-
                     {triggerQuestion && (
                       <>
                         <span style={{ fontSize: "13px" }}>a pour réponse</span>
@@ -242,7 +227,6 @@ function CreateQuestionnairePage() {
                       </>
                     )}
                   </div>
-
                   {triggerCandidates.length === 0 && (
                     <p style={{ fontSize: "12px", color: "var(--text-light)", margin: "6px 0 0" }}>
                       Aucune question à choix unique avant celle-ci.
@@ -256,16 +240,12 @@ function CreateQuestionnairePage() {
         })}
 
         <div style={{ display: "flex", gap: "12px", marginTop: "8px" }}>
-          <button className="btn btn-secondary" onClick={addQuestion}>
-            + Ajouter une question
-          </button>
-          <button className="btn btn-primary" onClick={handleSubmit}>
-            Créer le questionnaire
-          </button>
+          <button className="btn btn-secondary" onClick={addQuestion}>+ Ajouter une question</button>
+          <button className="btn btn-primary" onClick={handleSubmit}>Enregistrer les modifications</button>
         </div>
 
         {message && (
-          <p className={message.includes("succès") ? "msg-success" : "msg-error"} style={{ marginTop: "16px" }}>
+          <p className={message.startsWith("✓") ? "msg-success" : "msg-error"} style={{ marginTop: "16px" }}>
             {message}
           </p>
         )}
@@ -274,4 +254,4 @@ function CreateQuestionnairePage() {
   );
 }
 
-export default CreateQuestionnairePage;
+export default EditQuestionnairePage;

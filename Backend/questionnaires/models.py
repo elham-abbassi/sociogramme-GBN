@@ -60,6 +60,16 @@ class Question(models.Model):
         related_name='questions'
     )
 
+    # Conditional logic: show this question only if condition_question has condition_value as answer
+    condition_question = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='dependent_questions'
+    )
+    condition_value = models.CharField(max_length=255, blank=True)
+
     def __str__(self):
         return self.text
         

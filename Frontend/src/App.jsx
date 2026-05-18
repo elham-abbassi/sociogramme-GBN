@@ -6,6 +6,7 @@ import AnalysisPage from "./pages/admin/AnalysisPage.jsx";
 import AdminPage from "./pages/admin/AdminPage.jsx";
 import AdminLoginPage from "./pages/admin/AdminLoginPage.jsx";
 import CreateQuestionnairePage from "./pages/admin/CreateQuestionnairePage.jsx";
+import EditQuestionnairePage from "./pages/admin/EditQuestionnairePage.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
         <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
         <Route path="/admin/analysis/:id" element={<ProtectedRoute><AnalysisPage /></ProtectedRoute>} />
         <Route path="/admin/create-questionnaire" element={<ProtectedRoute><CreateQuestionnairePage /></ProtectedRoute>} />
+        <Route path="/admin/edit-questionnaire/:id" element={<ProtectedRoute><EditQuestionnairePage /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );

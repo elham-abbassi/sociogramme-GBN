@@ -86,17 +86,35 @@ def questionnaire_analysis(request, questionnaire_id):
         results["questions"].append(question_result)
 
     # --- Sociogram data ---
-    # Build name → department map from ChoiceOptions (which store employee info)
-    name_to_dept = {}
-    for opt in ChoiceOption.objects.all():
+    # Build label → {department, group} map from ALL ChoiceOptions dynamically
+    # Keys stored lowercase for case-insensitive matching
+    name_to_dept = {}       # lowercase label → department
+    name_to_group = {}      # lowercase label → group name
+    name_to_permanent = {}  # lowercase label → is_permanent (True/False)
+    label_canonical = {}    # lowercase → original-case label (for display)
+    for opt in ChoiceOption.objects.select_related("option_group").all():
+        key = opt.label.strip().lower()
+        name_to_group[key] = opt.option_group.name
+        name_to_permanent[key] = opt.is_permanent
+        label_canonical[key] = opt.label.strip()
         if opt.department:
-            name_to_dept[opt.label] = opt.department
+            name_to_dept[key] = opt.department
+
+    def lookup_group(name):
+        return name_to_group.get(name.lower(), "Répondant")
+
+    def lookup_dept(name, fallback=""):
+        return name_to_dept.get(name.lower(), fallback)
+
+    def lookup_permanent(name):
+        # Returns True/False for known ChoiceOption entries, None for pure respondents
+        return name_to_permanent.get(name.lower(), None)
 
     responses = Response.objects.filter(
         questionnaire=questionnaire
     ).prefetch_related("answers__question")
 
-    nodes = {}  # name → {id, department}
+    nodes = {}  # name → {id, department, group}
     edges = {}  # "source||target" → {source, target, weight}
 
     for response in responses:
@@ -104,17 +122,44 @@ def questionnaire_analysis(request, questionnaire_id):
         dept = (response.department or "").strip()
 
         if respondent:
-            # Respondent's own department overrides ChoiceOption department
-            nodes[respondent] = {
-                "id": respondent,
-                "department": dept or name_to_dept.get(respondent, ""),
-            }
+            if respondent not in nodes:
+                nodes[respondent] = {
+                    "id": respondent,
+                    "department": dept or lookup_dept(respondent),
+                    "group": lookup_group(respondent),
+                    "is_permanent": lookup_permanent(respondent),
+                    "attributes": {},
+                }
             if dept:
-                name_to_dept[respondent] = dept
+                name_to_dept[respondent.lower()] = dept
+
+                # Add a department node (if not already there)
+                if dept not in nodes:
+                    nodes[dept] = {
+                        "id": dept,
+                        "department": dept,
+                        "group": lookup_group(dept) or "Département",
+                        "is_permanent": None,
+                        "attributes": {},
+                    }
+
+                # Membership edge: respondent → their department (dashed in frontend)
+                edge_key = f"{respondent}||dept::{dept}"
+                if edge_key not in edges:
+                    edges[edge_key] = {
+                        "source": respondent,
+                        "target": dept,
+                        "weight": 1,
+                        "type": "membership",
+                    }
 
         for answer in response.answers.all():
             q = answer.question
-            # Only build edges for questions where people choose other people
+            # Single-choice answers → node attributes (keyed by OptionGroup name)
+            if q.type == "single_choice" and answer.value and respondent in nodes:
+                attr_key = q.option_group.name if q.option_group else q.text
+                nodes[respondent]["attributes"][attr_key] = answer.value
+
             if q.type in ["multiple_choice", "person_choice"] and answer.value:
                 try:
                     chosen = json.loads(answer.value)
@@ -124,19 +169,21 @@ def questionnaire_analysis(request, questionnaire_id):
                         target = target.strip()
                         if not target or not respondent:
                             continue
-                        # Add target node if not seen yet
                         if target not in nodes:
                             nodes[target] = {
                                 "id": target,
-                                "department": name_to_dept.get(target, ""),
+                                "department": lookup_dept(target),
+                                "group": name_to_group.get(target.lower(), "Inconnu"),
+                                "is_permanent": lookup_permanent(target),
+                                "attributes": {},
                             }
-                        # Add or increment edge
                         edge_key = f"{respondent}||{target}"
                         if edge_key not in edges:
                             edges[edge_key] = {
                                 "source": respondent,
                                 "target": target,
                                 "weight": 0,
+                                "type": "choice",
                             }
                         edges[edge_key]["weight"] += 1
                 except (json.JSONDecodeError, TypeError):

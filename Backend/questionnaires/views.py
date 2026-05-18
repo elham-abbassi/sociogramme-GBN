@@ -1,6 +1,6 @@
 from rest_framework import generics, status
 from .models import Questionnaire, OptionGroup, ChoiceOption
-from .serializers import QuestionnaireSerializer, QuestionnaireCreateSerializer
+from .serializers import QuestionnaireSerializer, QuestionnaireCreateSerializer, QuestionnaireUpdateSerializer
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
@@ -31,15 +31,98 @@ def create_questionnaire(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@api_view(['DELETE'])
+def delete_questionnaire(request, pk):
+    try:
+        questionnaire = Questionnaire.objects.get(pk=pk)
+    except Questionnaire.DoesNotExist:
+        return Response({"error": "Questionnaire introuvable."}, status=status.HTTP_404_NOT_FOUND)
+    questionnaire.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['DELETE'])
+def clear_questionnaire_responses(request, pk):
+    """Delete all responses for a questionnaire without deleting the questionnaire itself."""
+    try:
+        questionnaire = Questionnaire.objects.get(pk=pk)
+    except Questionnaire.DoesNotExist:
+        return Response({"error": "Questionnaire introuvable."}, status=status.HTTP_404_NOT_FOUND)
+    count, _ = questionnaire.responses.all().delete()
+    return Response({"message": f"{count} réponse(s) supprimée(s)."}, status=status.HTTP_200_OK)
+
+
+@api_view(['PUT'])
+def update_questionnaire(request, pk):
+    try:
+        questionnaire = Questionnaire.objects.get(pk=pk)
+    except Questionnaire.DoesNotExist:
+        return Response({"error": "Questionnaire introuvable."}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = QuestionnaireUpdateSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.update(questionnaire, serializer.validated_data)
+        return Response({"message": "Questionnaire mis à jour."}, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(['GET'])
 def get_departments(_request):
     group = OptionGroup.objects.filter(name="Departement").first()
     if not group:
         return Response([], status=status.HTTP_200_OK)
-    departments = list(
+    skip = {"", "none", "(none)", "null", "n/a", "aucun", "aucune"}
+    departments = [
+        label for label in
         ChoiceOption.objects.filter(option_group=group).values_list('label', flat=True)
+        if label and label.strip().lower() not in skip
+    ]
+    return Response(sorted(departments), status=status.HTTP_200_OK)
+
+
+@api_view(['GET', 'POST'])
+def permanent_staff(request):
+    """List or add permanent staff members (never deleted on import)."""
+    group = OptionGroup.objects.filter(name="Staffs").first()
+    if not group:
+        group, _ = OptionGroup.objects.get_or_create(name="Staffs")
+
+    if request.method == 'GET':
+        staff = ChoiceOption.objects.filter(option_group=group, is_permanent=True).values(
+            'id', 'label', 'department'
+        )
+        return Response(list(staff), status=status.HTTP_200_OK)
+
+    # POST — add a new permanent member
+    name = (request.data.get('name') or '').strip()
+    department = (request.data.get('department') or '').strip()
+    if not name:
+        return Response({"error": "Le nom est requis."}, status=status.HTTP_400_BAD_REQUEST)
+    if ChoiceOption.objects.filter(option_group=group, label__iexact=name).exists():
+        return Response({"error": "Ce nom existe déjà dans la liste."}, status=status.HTTP_400_BAD_REQUEST)
+    obj = ChoiceOption.objects.create(
+        option_group=group, label=name, department=department, is_permanent=True
     )
-    return Response(departments, status=status.HTTP_200_OK)
+    return Response({"id": obj.id, "label": obj.label, "department": obj.department}, status=status.HTTP_201_CREATED)
+
+
+@api_view(['DELETE', 'PATCH'])
+def permanent_staff_detail(request, pk):
+    """Delete or update a single permanent staff member."""
+    try:
+        obj = ChoiceOption.objects.get(pk=pk, is_permanent=True)
+    except ChoiceOption.DoesNotExist:
+        return Response({"error": "Introuvable."}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'DELETE':
+        obj.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    # PATCH — update department
+    department = (request.data.get('department') or '').strip()
+    obj.department = department
+    obj.save()
+    return Response({"id": obj.id, "label": obj.label, "department": obj.department}, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
